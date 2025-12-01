@@ -9,5 +9,11 @@ h1 {
   color: #333;
 }
 
+#calendar {
+  max-width: 900px;
+  margin: 40px auto;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-
