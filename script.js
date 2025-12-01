@@ -1,31 +1,46 @@
-document.addEventListener("DOMContentLoaded", function () {
-  var calendarEl = document.getElementById("calendar");
+const BACKEND_URL = "https://stcreporting-backend.onrender.com";
 
-  fetch("data/events.json")
+document.addEventListener("DOMContentLoaded", function () {
+  const calendarEl = document.getElementById("calendar");
+
+  fetch(`${BACKEND_URL}/events`)
     .then(response => response.json())
     .then(events => {
-        var calendar = new FullCalendar.Calendar(calendarEl, {
+        const calendar = new FullCalendar.Calendar(calendarEl, {
           initialView: "dayGridMonth",
           selectable: true,
           editable: true,
           events: events,
 
           dateClick: function (info) {
-            let title = prompt("Add Event Title:");
+            const title = prompt("Add Event Title:");
             if (title) {
-              calendar.addEvent({
+              const newEvent = {
+                id: Date.now().toString(),
                 title: title,
                 start: info.dateStr
+              };
+              calendar.addEvent(newEvent);
+
+              events.push(newEvent);
+              fetch(`${BACKEND_URL}/events`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(events)
               });
-              alert("Event added — remember to update events.json manually.");
             }
           },
 
           eventClick: function (info) {
-            let action = confirm("Delete this event?");
-            if (action) {
+            if (confirm("Delete this event?")) {
               info.event.remove();
-              alert("Event removed — remember to update events.json manually.");
+              events = events.filter(e => e.id !== info.event.id);
+
+              fetch(`${BACKEND_URL}/events`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(events)
+              });
             }
           }
         });
