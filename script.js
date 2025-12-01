@@ -1,4 +1,4 @@
-// Replace with your Render backend URL
+// Replace with your Render backend URLL
 const BACKEND_URL = "https://stcreporting-backend.onrender.com";
 
 document.addEventListener("DOMContentLoaded", function () {
