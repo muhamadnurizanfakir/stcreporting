@@ -14,7 +14,7 @@ const EVENTS_FILE = path.join(__dirname, "events.json");
 const TASKS_FILE = path.join(__dirname, "tasks.json"); // New file for tasks
 const RENDER_URL = "https://stcreporting-backend.onrender.com"; // Your deployed URL
 
-// --- Persistence Helper Functions ---
+// --- Persistence Helper Functions -----
 
 function readEvents() {
   const defaultEvents = [
