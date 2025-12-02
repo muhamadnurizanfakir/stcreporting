@@ -1,9 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const fs = require("fs");
-const path = require("path");
-const axios = require("axios"); // Used for the Keep-Alive function amp
+const fs = require("fs"); // Added: Node.js File System module
+const path = require("path"); // Added: Node.js Path module
+const axios = require("axios"); // Added: For Keep-Alive feature
 
 const app = express();
 app.use(cors());
@@ -15,6 +15,9 @@ const RENDER_URL = "https://stcreporting-backend.onrender.com"; // Your deployed
 
 // --- 1. Persistence Helper Functions ---
 
+/**
+ * Reads events from the events.json file. Returns default data if file is missing/error.
+ */
 function readEvents() {
   const defaultEvents = [
     { id: "1", title: "Team Meeting", start: "2025-12-05" },
@@ -33,11 +36,14 @@ function readEvents() {
     console.error("Error reading events file, returning default data:", error);
   }
   
-  // If file is missing or error occurred, initialize with default data
+  // If file is missing or error occurred, initialize with default data and save it
   writeEvents(defaultEvents); 
   return defaultEvents;
 }
 
+/**
+ * Writes the entire events array to the events.json file.
+ */
 function writeEvents(events) {
   try {
     fs.writeFileSync(EVENTS_FILE, JSON.stringify(events, null, 2), "utf8");
@@ -46,7 +52,7 @@ function writeEvents(events) {
   }
 }
 
-// --- 2. Keep-Alive Function ---
+// --- 2. Keep-Alive Function (Stops Render from sleeping) ---
 
 function keepAlive() {
   if (RENDER_URL) {
@@ -59,23 +65,20 @@ function keepAlive() {
   }
 }
 
-// --- 3. API Endpoints (Persistence Logic) ---
+// --- 3. API Endpoints (Now uses Persistence) ---
 
-// GET /events: Read all events
 app.get("/events", (req, res) => {
-  const events = readEvents();
+  const events = readEvents(); // Loads events from file
   res.json(events);
 });
 
-// POST /events: Receives the ENTIRE updated array from the frontend.
 app.post("/events", (req, res) => {
   const events = req.body;
-  writeEvents(events); // Overwrite the file with the new array
+  writeEvents(events); // Saves entire updated array to file
   res.json({ status: "success", message: "Events updated and saved." });
 });
 
 
-// GET /: Root endpoint check
 app.get("/", (req, res) => {
   res.send("Backend is running and ready for persistent events API calls!");
 });
@@ -86,8 +89,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT}`);
   
-  // Start the heartbeat timer (Every 14 minutes = 14 * 60 * 1000 = 840000ms)
-  // This interval is safely shorter than Render's 15-minute spin-down time.
+  // Start the heartbeat timer (Every 14 minutes)
   setInterval(keepAlive, 840000); 
   
   // Run the first ping immediately after the server starts
