@@ -1,6 +1,6 @@
-// script.js (FINAL VERSION - Includes Persistence logic setup, dayMaxEvents, and Time Input)
+// script.js (FINAL VERSION - Includes Persistence, Views, Editing, and Time Input)
 
-// Replace with your Render backend URLL
+// Replace with your Render backend URL
 const BACKEND_URL = "https://stcreporting-backend.onrender.com";
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -16,72 +16,106 @@ document.addEventListener("DOMContentLoaded", function () {
       let eventsArray = events; 
       
       const calendar = new FullCalendar.Calendar(calendarEl, {
+        
+        // --- VIEW SETTINGS ---
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay' // ADDED: Day, Week, and Month views
+        },
         initialView: "dayGridMonth",
         selectable: true,
-        editable: true,
+        editable: true, // Enables drag/drop and resize editing
         events: eventsArray,
-        
-        // Ensures multiple events on the same day are displayed
         dayMaxEvents: true, 
-        
-        // This setting ensures time is displayed on events in month view
         eventTimeFormat: { 
             hour: '2-digit',
             minute: '2-digit',
             meridiem: false 
         },
 
-        // --- Add new event (Now prompts for time) ---
+        // --- PERSISTENCE UTILITY ---
+        // Function to update the backend with the current eventsArray
+        function updateBackend() {
+            fetch(`${BACKEND_URL}/events`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(eventsArray)
+            })
+            .catch(err => console.error("Error updating events:", err));
+        }
+
+        // --- EDITING LOGIC (Drag/Drop/Resize) ---
+        eventChange: function (info) {
+            // Find the updated event in the array and replace it
+            const index = eventsArray.findIndex(e => e.id === info.event.id);
+            if (index > -1) {
+                eventsArray[index] = {
+                    id: info.event.id,
+                    title: info.event.title,
+                    start: info.event.startStr,
+                    end: info.event.endStr || null, // endStr might be empty for all-day events
+                    allDay: info.event.allDay
+                };
+            }
+            updateBackend();
+        },
+
+        // --- ADD NEW EVENT ---
         dateClick: function (info) {
           const title = prompt("Add Event Title:");
           if (title) {
             
-            // NOTE: Using simple 24-hour format (e.g., 08:00, 15:00) for prompt
-            const startTime = prompt("Enter Start Time (e.g., 08:00):");
-            const endTime = prompt("Enter End Time (e.g., 10:00):");
+            const startTime = prompt("Enter Start Time (e.g., 08:00) or leave blank for all-day:");
+            let startDateTime = info.dateStr;
+            let endDateTime = null;
+            let isAllDay = true;
 
-            // Combine date (YYYY-MM-DD) and time (HH:MM) into ISO 8601 format
-            const startDateTime = `${info.dateStr}T${startTime}:00`;
-            const endDateTime = `${info.dateStr}T${endTime}:00`;
+            if (startTime) {
+                const endTime = prompt("Enter End Time (e.g., 10:00):");
+                startDateTime = `${info.dateStr}T${startTime}:00`;
+                endDateTime = `${info.dateStr}T${endTime}:00`;
+                isAllDay = false;
+            }
 
             const newEvent = {
               id: Date.now().toString(),
               title: title,
-              // Use the full date-time strings
               start: startDateTime,
-              end: endDateTime, 
-              allDay: false // Important: set to false for timed events
+              end: endDateTime,
+              allDay: isAllDay 
             };
 
-            // Add event to calendar
             calendar.addEvent(newEvent);
-
-            // Update backend
             eventsArray.push(newEvent);
-            fetch(`${BACKEND_URL}/events`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(eventsArray)
-            })
-            .catch(err => console.error("Error updating events:", err));
+            updateBackend();
           }
         },
 
-        // --- Delete event ---
+        // --- EDIT/DELETE ON CLICK ---
         eventClick: function (info) {
-          if (confirm("Delete this event?")) {
-            info.event.remove();
+          const action = prompt(`Event: ${info.event.title}\n\nDo you want to (E)dit the title or (D)elete the event? (Type E or D)`);
+          
+          if (action && action.toUpperCase() === 'D') {
+            if (confirm(`Are you sure you want to delete event: ${info.event.title}?`)) {
+              info.event.remove();
 
-            // Remove from events array
-            eventsArray = eventsArray.filter(e => e.id !== info.event.id);
-
-            // Update backend
-            fetch(`${BACKEND_URL}/events`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(eventsArray)
-            })
-            .catch(err => console.error("Error updating events:", err));
+              // Remove from events array
+              eventsArray = eventsArray.filter(e => e.id !== info.event.id);
+              updateBackend();
+            }
+          } else if (action && action.toUpperCase() === 'E') {
+            const newTitle = prompt("Enter new title for the event:", info.event.title);
+            if (newTitle) {
+              info.event.setProp('title', newTitle);
+              
+              // Update the array object for persistence
+              const index = eventsArray.findIndex(e => e.id === info.event.id);
+              if (index > -1) {
+                  eventsArray[index].title = newTitle;
+              }
+              updateBackend();
+            }
           }
         }
       });
