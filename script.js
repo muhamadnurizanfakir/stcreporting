@@ -1,4 +1,4 @@
-// Replace with your Render backend URLL
+// Replace with your Render backend URL once deployed (e.g., "https://your-app-name.onrender.com")
 const BACKEND_URL = "https://stcreporting-backend.onrender.com";
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -6,7 +6,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Load events from backend
   fetch(`${BACKEND_URL}/events`)
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) throw new Error("Network response was not ok");
+        return response.json();
+    })
     .then(events => {
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: "dayGridMonth",
@@ -14,45 +17,53 @@ document.addEventListener("DOMContentLoaded", function () {
         editable: true,
         events: events,
 
-        // Add new event
+        // --- ADD NEW EVENT (POST request) ---
         dateClick: function (info) {
           const title = prompt("Add Event Title:");
           if (title) {
             const newEvent = {
-              id: Date.now().toString(),
               title: title,
-              start: info.dateStr
+              start: info.dateStr,
+              allDay: info.allDay
             };
 
-            // Add event to calendar
-            calendar.addEvent(newEvent);
-
-            // Update backend
-            events.push(newEvent);
+            // 1. Post new event to backend
             fetch(`${BACKEND_URL}/events`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(events)
+              body: JSON.stringify(newEvent)
             })
-            .catch(err => console.error("Error updating events:", err));
+            .then(response => response.json())
+            .then(addedEvent => {
+                 // 2. Add event to calendar using the ID returned from the backend
+                 if (addedEvent && addedEvent.id) {
+                     calendar.addEvent(addedEvent);
+                 } else {
+                     console.error("Backend did not return a valid event object with ID.");
+                 }
+            })
+            .catch(err => console.error("Error adding event:", err));
           }
         },
 
-        // Delete event
+        // --- DELETE EVENT (DELETE request) ---
         eventClick: function (info) {
-          if (confirm("Delete this event?")) {
-            info.event.remove();
+          if (confirm(`Delete event: ${info.event.title}?`)) {
+            const eventId = info.event.id;
 
-            // Remove from events array
-            events = events.filter(e => e.id !== info.event.id);
-
-            // Update backend
-            fetch(`${BACKEND_URL}/events`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(events)
+            // 1. Send DELETE request to backend
+            fetch(`${BACKEND_URL}/events/${eventId}`, {
+              method: "DELETE"
             })
-            .catch(err => console.error("Error updating events:", err));
+            .then(response => {
+                if (response.ok) {
+                    // 2. Remove event from calendar only if backend delete was successful
+                    info.event.remove();
+                } else {
+                    alert("Failed to delete event on the server.");
+                }
+            })
+            .catch(err => console.error("Error deleting event:", err));
           }
         }
       });
@@ -61,6 +72,7 @@ document.addEventListener("DOMContentLoaded", function () {
     })
     .catch(err => {
       console.error("Error fetching events:", err);
-      alert("Error fetching events from backend. Make sure the backend is running.");
+      // NOTE: Update the alert to reflect the new expected behavior
+      alert("Error fetching events. Make sure the backend is running and URL is correct.");
     });
 });
