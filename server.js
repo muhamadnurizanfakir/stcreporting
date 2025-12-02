@@ -8,36 +8,36 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// CRITICAL CHANGE: Use only the file name, as it's in the root
-const EVENTS_FILE = "events.json"; 
+// Set the EVENTS_FILE path using path.join to ensure correct behavior across environments
+const EVENTS_FILE = path.join(__dirname, "events.json");
 
 // --- Helper Functions for File Persistence ---
 
 /**
  * Reads events from the events.json file.
- * Returns default data if the file is missing or contains errors.
+ * Returns default data if the file is missing, empty, or has an error.
  */
 function readEvents() {
+  const defaultEvents = [
+    { id: "1", title: "Team Meeting", start: "2025-12-05" },
+    { id: "2", title: "Project Deadline", start: "2025-12-10" },
+    { id: "3", title: "Client Call", start: "2025-12-15" }
+  ];
+  
   try {
     if (fs.existsSync(EVENTS_FILE)) {
       const data = fs.readFileSync(EVENTS_FILE, "utf8");
-      // Check if data is not empty before parsing
       if (data) {
           return JSON.parse(data);
       }
     }
   } catch (error) {
-    // Log the error but return default data to keep the server running
     console.error("Error reading events file, returning default data:", error);
   }
   
-  // Default data if file doesn't exist, is empty, or error occurs
-  // NOTE: The IDs must be strings, as used by FullCalendar
-  return [
-    { id: "1", title: "Team Meeting", start: "2025-12-05" },
-    { id: "2", title: "Project Deadline", start: "2025-12-10" },
-    { id: "3", title: "Client Call", start: "2025-12-15" }
-  ];
+  // If file is missing or error occurred, create the file with default data
+  writeEvents(defaultEvents); 
+  return defaultEvents;
 }
 
 /**
@@ -45,6 +45,7 @@ function readEvents() {
  */
 function writeEvents(events) {
   try {
+    // Write synchronously to ensure data is saved before response is sent
     fs.writeFileSync(EVENTS_FILE, JSON.stringify(events, null, 2), "utf8");
   } catch (error) {
     console.error("Error writing events file:", error);
@@ -60,44 +61,17 @@ app.get("/events", (req, res) => {
   res.json(events);
 });
 
-// POST /events: Add a new event
+// POST /events: This endpoint receives the ENTIRE updated array from the frontend.
 app.post("/events", (req, res) => {
-  const events = readEvents();
-  const newEventData = req.body;
-  
-  // Create a unique ID for the new event
-  // FullCalendar requires IDs to be present and unique
-  const newId = Date.now().toString();
-  const newEvent = { id: newId, ...newEventData };
-  
-  events.push(newEvent);
-  writeEvents(events);
-  
-  // Return the newly created event object including its ID
-  res.status(201).json(newEvent);
-});
-
-// DELETE /events/:id: Delete an event
-app.delete("/events/:id", (req, res) => {
-  let events = readEvents();
-  const eventIdToDelete = req.params.id;
-  
-  const initialLength = events.length;
-  events = events.filter(e => e.id !== eventIdToDelete);
-  
-  if (events.length < initialLength) {
-    writeEvents(events);
-    res.json({ status: "success", message: `Event with id ${eventIdToDelete} deleted.` });
-  } else {
-    // Return 404 if event wasn't found
-    res.status(404).json({ status: "error", message: `Event with id ${eventIdToDelete} not found.` });
-  }
+  const events = req.body;
+  writeEvents(events); // Overwrite the file with the new array
+  res.json({ status: "success", message: "Events updated and saved." });
 });
 
 
 // GET /: Root endpoint check
 app.get("/", (req, res) => {
-  res.send("Backend is running and ready for events API calls!");
+  res.send("Backend is running and ready for persistent events API calls!");
 });
 
 const PORT = process.env.PORT || 3000;
