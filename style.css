@@ -1,37 +1,68 @@
 body {
-  /* Thinner font stacks */
+  /* Thinner font stack */
   font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  margin: 0; /* Changed to 0 for better mobile edge-to-edge look */
-  padding: 20px;
+  margin: 0; /* Reset margin for full-width navbar */
+  padding: 0; /* Reset padding */
   background-color: #f5f5f5;
 }
+
+/* --- New Navbar Styles --- */
+.navbar {
+    background-color: #333; /* Dark background */
+    overflow: hidden; 
+    padding: 10px 20px;
+    margin-bottom: 20px; /* Space below the bar */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.navbar a {
+    float: left;
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    font-size: 17px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+    margin-right: 5px;
+}
+
+.navbar a:hover {
+    background-color: #555;
+}
+/* ------------------------- */
 
 h1 {
   text-align: center;
   color: #333;
-  margin-top: 0;
+  padding-top: 20px; /* Add space above the title */
 }
 
 #calendar {
-  /* MOBILE DEFAULT: Calendar takes 95% of the screen width */
+  /* Responsive Calendar Settings (Mobile Default) */
   max-width: 95%; 
   margin: 40px auto;
   background-color: #fff;
-  padding: 10px; /* Reduced padding for mobile */
+  padding: 10px; 
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* DESKTOP/TABLET OPTIMIZATION: Only apply 1200px width on larger screens */
+/* Desktop/Tablet Optimization */
 @media (min-width: 1000px) {
     #calendar {
         max-width: 1200px;
     }
 }
 
-
 /* Smaller Event Font Size */
 #calendar .fc-event-title {
     font-size: 0.8em; 
 }
 
+/* Manual Override Class for Mobile View */
+#calendar.mobile-view {
+    max-width: 400px; 
+    width: 100%;
+}
