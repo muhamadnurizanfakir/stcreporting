@@ -1,5 +1,6 @@
 body {
-  font-family: Inter, sans-serif;
+  /* CHANGE: Switched to a cleaner, thinner-looking font stack */
+  font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
   margin: 20px;
   background-color: #f5f5f5;
 }
@@ -10,7 +11,7 @@ h1 {
 }
 
 #calendar {
-  /* CHANGE 1: Wider Calendar */
+  /* Retained change: Wider Calendar */
   max-width: 1200px; 
   margin: 40px auto;
   background-color: #fff;
@@ -19,8 +20,7 @@ h1 {
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* CHANGE 2: Smaller Event Font Size */
+/* Retained change: Smaller Event Font Size */
 #calendar .fc-event-title {
-    font-size: 0.5em; /* You can adjust this value (e.g., 0.7em for smaller) */
+    font-size: 0.8em; 
 }
-
