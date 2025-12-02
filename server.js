@@ -1,100 +1,95 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const fs = require("fs"); // CRITICAL: For reading/writing events.json
-const path = require("path"); // CRITICAL: For reliable file paths
-const axios = require("axios"); // For Keep-Alive function
+const fs = require("fs"); 
+const path = require("path");
+const axios = require("axios"); 
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Set the EVENTS_FILE path using path.join for reliability across environments
+// Set file paths
 const EVENTS_FILE = path.join(__dirname, "events.json");
+const TASKS_FILE = path.join(__dirname, "tasks.json"); // New file for tasks
 const RENDER_URL = "https://stcreporting-backend.onrender.com"; // Your deployed URL
 
-// --- 1. Persistence Helper Functions ---
+// --- Persistence Helper Functions ---
 
-/**
- * Reads events from the events.json file. Returns default data if file is missing/error.
- */
 function readEvents() {
   const defaultEvents = [
     { id: "1", title: "Team Meeting", start: "2025-12-05" },
     { id: "2", title: "Project Deadline", start: "2025-12-10" },
     { id: "3", title: "Client Call", start: "2025-12-15" }
   ];
-  
   try {
     if (fs.existsSync(EVENTS_FILE)) {
       const data = fs.readFileSync(EVENTS_FILE, "utf8");
-      if (data) {
-          return JSON.parse(data);
-      }
+      if (data) { return JSON.parse(data); }
     }
-  } catch (error) {
-    console.error("Error reading events file, returning default data:", error);
-  }
-  
-  // If file is missing or error occurred, initialize with default data and save it
+  } catch (error) { console.error("Error reading events file:", error); }
   writeEvents(defaultEvents); 
   return defaultEvents;
 }
 
-/**
- * Writes the entire events array to the events.json file.
- */
 function writeEvents(events) {
   try {
-    // Saves data to disk (events.json)
     fs.writeFileSync(EVENTS_FILE, JSON.stringify(events, null, 2), "utf8");
-  } catch (error) {
-    console.error("Error writing events file:", error);
-  }
+  } catch (error) { console.error("Error writing events file:", error); }
 }
 
-// --- 2. Keep-Alive Function (Stops Render from sleeping) ---
+// NEW: Task Persistence Functions
+function readTasks() {
+    const defaultTasks = [
+        { id: "t1", description: "Review Q4 Metrics", task: "Analyze data", actionPlan: "Draft executive summary", pic: "Alice", targetDate: "2025-12-31", completionDate: "", percentage: 0 },
+        { id: "t2", description: "Calendar Integration", task: "Test persistence", actionPlan: "Verify server.js logic", pic: "Bob", targetDate: "2025-12-15", completionDate: "", percentage: 50 }
+    ];
+    try {
+        if (fs.existsSync(TASKS_FILE)) {
+            const data = fs.readFileSync(TASKS_FILE, "utf8");
+            if (data) { return JSON.parse(data); }
+        }
+    } catch (error) { console.error("Error reading tasks file, returning default data:", error); }
+    writeTasks(defaultTasks);
+    return defaultTasks;
+}
 
+function writeTasks(tasks) {
+    try {
+        fs.writeFileSync(TASKS_FILE, JSON.stringify(tasks, null, 2), "utf8");
+    } catch (error) { console.error("Error writing tasks file:", error); }
+}
+
+
+// --- Keep-Alive Function (Stops Render from sleeping) ---
 function keepAlive() {
   if (RENDER_URL) {
     console.log(`Pinging self at ${RENDER_URL} to stay awake...`);
     axios.get(RENDER_URL)
       .then(() => console.log("Ping successful."))
       .catch(err => console.error("Ping failed:", err.message));
-  } else {
-    console.log("RENDER_URL not set, cannot perform self-ping.");
   }
 }
 
-// --- 3. API Endpoints (Now uses Persistence) ---
+// --- API Endpoints ---
 
-// GET /events: Loads events from file
-app.get("/events", (req, res) => {
-  const events = readEvents(); 
-  res.json(events);
-});
+// Calendar Endpoints
+app.get("/events", (req, res) => { res.json(readEvents()); });
+app.post("/events", (req, res) => { writeEvents(req.body); res.json({ status: "success", message: "Events updated." }); });
 
-// POST /events: Saves entire updated array to file
-app.post("/events", (req, res) => {
-  const events = req.body;
-  writeEvents(events); 
-  res.json({ status: "success", message: "Events updated and saved." });
-});
+// NEW: Task Reporting Endpoints
+app.get("/tasks", (req, res) => { res.json(readTasks()); });
+app.post("/tasks", (req, res) => { writeTasks(req.body); res.json({ status: "success", message: "Tasks updated." }); });
 
 
 app.get("/", (req, res) => {
-  res.send("Backend is running and ready for persistent events API calls!");
+  res.send("Backend is running and ready for persistent events and tasks API calls!");
 });
 
-// --- 4. Server Start and Keep-Alive Initialization ---
-
+// --- Server Start ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT}`);
-  
-  // Start the heartbeat timer (Every 14 minutes)
   setInterval(keepAlive, 840000); 
-  
-  // Run the first ping immediately after the server starts
   keepAlive();
 });
