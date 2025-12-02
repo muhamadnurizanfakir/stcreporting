@@ -10,10 +10,16 @@ h1 {
 }
 
 #calendar {
-  max-width: 900px;
+  /* CHANGE 1: Wider Calendar */
+  max-width: 1200px; 
   margin: 40px auto;
   background-color: #fff;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* CHANGE 2: Smaller Event Font Size */
+#calendar .fc-event-title {
+    font-size: 0.8em; /* You can adjust this value (e.g., 0.7em for smaller) */
 }
