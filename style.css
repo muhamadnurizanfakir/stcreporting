@@ -1,5 +1,5 @@
 body {
-  /* Thinner font stack */
+  /* Thinner font stacks */
   font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
   margin: 0; /* Changed to 0 for better mobile edge-to-edge look */
   padding: 20px;
@@ -34,3 +34,4 @@ h1 {
 #calendar .fc-event-title {
     font-size: 0.8em; 
 }
+
