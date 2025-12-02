@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STC Reporting - Daily Tasks</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="index.html">Home</a>
+        <a href="calendar.html">Calendar</a> 
+        <a href="reporting.html">Reporting</a>
+        <a href="kpi.html">KPI</a>
+    </nav>
+    
+    <div class="content-container wide-container">
+        <h1>Daily Task Reporting</h1>
+        <p>Manage and track progress on all daily and pending tasks.</p>
+
+        <div class="table-actions">
+            <button id="add-task-btn" class="action-button">Add New Task</button>
+        </div>
+
+        <div class="table-responsive">
+            <table id="daily-tasks-table">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Description</th>
+                        <th>Task</th>
+                        <th>Action Plan</th>
+                        <th>PIC</th>
+                        <th>Target Date</th>
+                        <th>Completion Date</th>
+                        <th>Percentage</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="task-list-body">
+                    <!-- Task rows will be populated here by reporting.js -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Task Logic -->
+    <script src="reporting.js"></script>
+</body>
+</html>
