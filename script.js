@@ -1,4 +1,4 @@
-// script.js (FINAL ROBUST VERSION - Includes List Views, Full Editing, Time, and Persistence Setup)
+// script.js (FINAL VERSION: Includes Persistence, Views, Editing, Time, and Mobile Toggle)
 
 // Replace with your Render backend URL
 const BACKEND_URL = "https://stcreporting-backend.onrender.com";
@@ -34,22 +34,23 @@ document.addEventListener("DOMContentLoaded", function () {
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
-          // ADDED: List views to the right side of the header
+          // Cleaned up views: Month, Week, Day, List Week, List Day
           right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek,listDay' 
         },
         initialView: "dayGridMonth",
         selectable: true,
-        editable: true,
+        editable: true, // Enables drag/drop and resize editing
         events: eventsArray,
-        dayMaxEvents: true, 
+        dayMaxEvents: true, // Ensures all events are shown in dayGridMonth
         eventTimeFormat: { 
             hour: '2-digit',
             minute: '2-digit',
             meridiem: false 
         },
-        
+
         // --- EDITING LOGIC (Drag/Drop/Resize) ---
         eventChange: function (info) {
+            // Update the array object for persistence after drag/drop
             const index = eventsArray.findIndex(e => e.id === info.event.id);
             if (index > -1) {
                 eventsArray[index] = {
@@ -101,6 +102,8 @@ document.addEventListener("DOMContentLoaded", function () {
           if (action && action.toUpperCase() === 'D') {
             if (confirm(`Are you sure you want to delete event: ${info.event.title}?`)) {
               info.event.remove();
+
+              // Remove from events array
               eventsArray = eventsArray.filter(e => e.id !== info.event.id);
               updateBackend();
             }
@@ -114,6 +117,7 @@ document.addEventListener("DOMContentLoaded", function () {
             
             // --- 2. EDIT TIME (Only for timed events) ---
             if (!info.event.allDay) {
+                // Get existing time for default value
                 const existingStart = info.event.start ? info.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
                 const existingEnd = info.event.end ? info.event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
 
@@ -142,28 +146,32 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       calendar.render();
+      
+      // --- MANUAL TOGGLE LOGIC ---
+      const toggleButton = document.getElementById("toggle-view-btn");
+      const calendarContainer = document.getElementById("calendar");
+      let isMobileView = false; 
+
+      if (toggleButton) { // Ensure button exists before adding listener
+          toggleButton.addEventListener("click", () => {
+              if (isMobileView) {
+                  // Switch to Desktop View (wide)
+                  calendarContainer.classList.remove("mobile-view");
+                  toggleButton.textContent = "Switch to Mobile View";
+              } else {
+                  // Switch to Mobile View (narrow)
+                  calendarContainer.classList.add("mobile-view");
+                  toggleButton.textContent = "Switch to Desktop View";
+              }
+              isMobileView = !isMobileView;
+              
+              // Tell FullCalendar to redraw itself after container size changes
+              calendar.updateSize(); 
+          });
+      }
     })
     .catch(err => {
       console.error("Error fetching events:", err);
       alert("Error fetching events from backend. Make sure the backend is running.");
     });
-
-    // --- MANUAL TOGGLE LOGIC ---
-    const toggleButton = document.getElementById("toggle-view-btn");
-    const calendarContainer = document.getElementById("calendar");
-    let isMobileView = false; 
-
-    if (toggleButton) { // Ensure button exists before adding listener
-        toggleButton.addEventListener("click", () => {
-            if (isMobileView) {
-                calendarContainer.classList.remove("mobile-view");
-                toggleButton.textContent = "Switch to Mobile View";
-            } else {
-                calendarContainer.classList.add("mobile-view");
-                toggleButton.textContent = "Switch to Desktop View";
-            }
-            isMobileView = !isMobileView;
-            calendar.updateSize(); 
-        });
-    }
 });
