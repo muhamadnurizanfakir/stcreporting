@@ -1,4 +1,4 @@
-// script.js (FINAL ROBUST VERSION - Includes Full Editing, Views, Time, and Persistence)
+// script.js (FINAL ROBUST VERSION - Includes List Views, Full Editing, Time, and Persistence Setup)
 
 // Replace with your Render backend URL
 const BACKEND_URL = "https://stcreporting-backend.onrender.com";
@@ -34,11 +34,12 @@ document.addEventListener("DOMContentLoaded", function () {
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          // ADDED: List views to the right side of the header
+          right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek,listDay' 
         },
         initialView: "dayGridMonth",
         selectable: true,
-        editable: true, // Enables drag/drop and resize editing
+        editable: true,
         events: eventsArray,
         dayMaxEvents: true, 
         eventTimeFormat: { 
@@ -46,10 +47,9 @@ document.addEventListener("DOMContentLoaded", function () {
             minute: '2-digit',
             meridiem: false 
         },
-
+        
         // --- EDITING LOGIC (Drag/Drop/Resize) ---
         eventChange: function (info) {
-            // Find the updated event in the array and replace it
             const index = eventsArray.findIndex(e => e.id === info.event.id);
             if (index > -1) {
                 eventsArray[index] = {
@@ -101,8 +101,6 @@ document.addEventListener("DOMContentLoaded", function () {
           if (action && action.toUpperCase() === 'D') {
             if (confirm(`Are you sure you want to delete event: ${info.event.title}?`)) {
               info.event.remove();
-
-              // Remove from events array
               eventsArray = eventsArray.filter(e => e.id !== info.event.id);
               updateBackend();
             }
@@ -116,7 +114,6 @@ document.addEventListener("DOMContentLoaded", function () {
             
             // --- 2. EDIT TIME (Only for timed events) ---
             if (!info.event.allDay) {
-                // Get existing time for default value
                 const existingStart = info.event.start ? info.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
                 const existingEnd = info.event.end ? info.event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
 
@@ -133,7 +130,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             // --- 3. PERSIST CHANGES ---
-            // Update the array object for persistence
             const index = eventsArray.findIndex(e => e.id === info.event.id);
             if (index > -1) {
                 eventsArray[index].title = info.event.title;
@@ -141,7 +137,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 eventsArray[index].end = info.event.endStr || null;
             }
             updateBackend();
-            
           }
         }
       });
@@ -150,7 +145,25 @@ document.addEventListener("DOMContentLoaded", function () {
     })
     .catch(err => {
       console.error("Error fetching events:", err);
-      // NOTE: This alert is now only a fallback, as the Keep-Alive function should prevent it.
       alert("Error fetching events from backend. Make sure the backend is running.");
     });
+
+    // --- MANUAL TOGGLE LOGIC ---
+    const toggleButton = document.getElementById("toggle-view-btn");
+    const calendarContainer = document.getElementById("calendar");
+    let isMobileView = false; 
+
+    if (toggleButton) { // Ensure button exists before adding listener
+        toggleButton.addEventListener("click", () => {
+            if (isMobileView) {
+                calendarContainer.classList.remove("mobile-view");
+                toggleButton.textContent = "Switch to Mobile View";
+            } else {
+                calendarContainer.classList.add("mobile-view");
+                toggleButton.textContent = "Switch to Desktop View";
+            }
+            isMobileView = !isMobileView;
+            calendar.updateSize(); 
+        });
+    }
 });
