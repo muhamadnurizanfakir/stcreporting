@@ -1,15 +1,15 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const fs = require("fs"); // Added: Node.js File System module
-const path = require("path"); // Added: Node.js Path module
-const axios = require("axios"); // Added: For Keep-Alive feature
+const fs = require("fs"); // CRITICAL: For reading/writing events.json
+const path = require("path"); // CRITICAL: For reliable file paths
+const axios = require("axios"); // For Keep-Alive function
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Set the EVENTS_FILE path using path.join for reliability
+// Set the EVENTS_FILE path using path.join for reliability across environments
 const EVENTS_FILE = path.join(__dirname, "events.json");
 const RENDER_URL = "https://stcreporting-backend.onrender.com"; // Your deployed URL
 
@@ -46,6 +46,7 @@ function readEvents() {
  */
 function writeEvents(events) {
   try {
+    // Saves data to disk (events.json)
     fs.writeFileSync(EVENTS_FILE, JSON.stringify(events, null, 2), "utf8");
   } catch (error) {
     console.error("Error writing events file:", error);
@@ -67,14 +68,16 @@ function keepAlive() {
 
 // --- 3. API Endpoints (Now uses Persistence) ---
 
+// GET /events: Loads events from file
 app.get("/events", (req, res) => {
-  const events = readEvents(); // Loads events from file
+  const events = readEvents(); 
   res.json(events);
 });
 
+// POST /events: Saves entire updated array to file
 app.post("/events", (req, res) => {
   const events = req.body;
-  writeEvents(events); // Saves entire updated array to file
+  writeEvents(events); 
   res.json({ status: "success", message: "Events updated and saved." });
 });
 
