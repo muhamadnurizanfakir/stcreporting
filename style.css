@@ -1,5 +1,5 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: Inter, sans-serif;
   margin: 20px;
   background-color: #f5f5f5;
 }
@@ -21,5 +21,6 @@ h1 {
 
 /* CHANGE 2: Smaller Event Font Size */
 #calendar .fc-event-title {
-    font-size: 0.8em; /* You can adjust this value (e.g., 0.7em for smaller) */
+    font-size: 0.5em; /* You can adjust this value (e.g., 0.7em for smaller) */
 }
+
