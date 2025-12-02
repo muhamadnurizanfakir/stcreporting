@@ -1,26 +1,36 @@
 body {
-  /* CHANGE: Switched to a cleaner, thinner-looking font stack */
+  /* Thinner font stack */
   font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  margin: 20px;
+  margin: 0; /* Changed to 0 for better mobile edge-to-edge look */
+  padding: 20px;
   background-color: #f5f5f5;
 }
 
 h1 {
   text-align: center;
   color: #333;
+  margin-top: 0;
 }
 
 #calendar {
-  /* Retained change: Wider Calendar */
-  max-width: 1200px; 
+  /* MOBILE DEFAULT: Calendar takes 95% of the screen width */
+  max-width: 95%; 
   margin: 40px auto;
   background-color: #fff;
-  padding: 20px;
+  padding: 10px; /* Reduced padding for mobile */
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* Retained change: Smaller Event Font Size */
+/* DESKTOP/TABLET OPTIMIZATION: Only apply 1200px width on larger screens */
+@media (min-width: 1000px) {
+    #calendar {
+        max-width: 1200px;
+    }
+}
+
+
+/* Smaller Event Font Size */
 #calendar .fc-event-title {
     font-size: 0.8em; 
 }
